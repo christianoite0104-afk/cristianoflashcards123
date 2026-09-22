@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CRISTIANO'S | Interactive Study Platform</title>
+  <style>
+    :root {
+      --bg-color: #050811;
+      --card-bg: #0b1329;
+      --border-color: #1d2a4a;
+      --accent-blue: #2563eb;
+      --accent-hover: #1d4ed8;
+      --gold-accent: #f59e0b;
+      --gold-glow: rgba(245, 158, 11, 0.2);
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --correct-green: #10b981;
+      --incorrect-red: #ef4444;
+      --option-hover: #162347;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-main); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+    .container { width: 100%; max-width: 650px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+
+    .header { width: 100%; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 14px; }
+    
+    .brand {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--text-main);
+      letter-spacing: 2px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand span {
+      color: var(--gold-accent);
+      text-shadow: 0 0 10px var(--gold-glow);
+    }
+
+    .nav-btn { background: none; border: 1px solid var(--border-color); color: var(--text-sub); padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; }
+    .nav-btn:hover { color: var(--text-main); border-color: var(--accent-blue); background: var(--card-bg); }
+
+    .view { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+    .hidden { display: none !important; }
+
+    /* Special Today Quiz Banner */
+    .today-card {
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(245, 158, 11, 0.15));
+      border: 1px solid var(--gold-accent);
+      box-shadow: 0 0 15px var(--gold-glow);
+    }
+
+    /* Dashboard / Quiz Selector */
+    .dashboard-card { width: 100%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .quiz-grid { display: flex; flex-direction: column; gap: 10px; width: 100%; max-height: 320px; overflow-y: auto; }
+    .quiz-item { background: var(--bg-color); border: 1px solid var(--border-color); padding: 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .quiz-info { display: flex; flex-direction: column; gap: 4px; }
+    .quiz-title { font-weight: 700; font-size: 1.05rem; color: var(--text-main); }
+    .quiz-count { font-size: 0.8rem; color: var(--gold-accent); }
+    .btn-group { display: flex; gap: 8px; }
+
+    /* Quiz Runner */
+    .quiz-card { width: 100%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 16px; }
+    .progress { color: var(--text-sub); font-size: 0.85rem; font-weight: 600; display: flex; justify-content: space-between; }
+    .question-text { font-size: 1.25rem; font-weight: 600; line-height: 1.4; }
+    .options-grid { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+    .option-btn { width: 100%; padding: 12px 16px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 8px; text-align: left; font-size: 1rem; cursor: pointer; transition: all 0.2s; }
+    .option-btn:hover:not(:disabled) { background: var(--option-hover); border-color: var(--accent-blue); }
+    .option-btn:disabled { cursor: default; }
+    .option-btn.correct { background: rgba(16, 185, 129, 0.15) !important; border-color: var(--correct-green) !important; color: var(--correct-green) !important; font-weight: 600; }
+    .option-btn.incorrect { background: rgba(239, 68, 68, 0.15) !important; border-color: var(--incorrect-red) !important; color: var(--incorrect-red) !important; font-weight: 600; }
+
+    /* Explanation Box */
+    .explanation-box {
+      background: rgba(37, 99, 235, 0.1);
+      border: 1px solid var(--accent-blue);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 0.9rem;
+      color: var(--text-main);
+      line-height: 1.4;
+    }
+    .explanation-title {
+      font-weight: 700;
+      color: var(--gold-accent);
+      margin-bottom: 4px;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Buttons & Inputs */
+    .action-btn { background: var(--accent-blue); color: white; border: none; padding: 10px 14px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .action-btn:hover { background: var(--accent-hover); }
+    .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .action-btn.secondary { background: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
+    .action-btn.secondary:hover { border-color: var(--accent-blue); }
+    .action-btn.warning { background: rgba(245, 158, 11, 0.15); border: 1px solid var(--gold-accent); color: var(--gold-accent); }
+    .action-btn.warning:hover:not(:disabled) { background: var(--gold-accent); color: black; }
+    .action-btn.danger { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--incorrect-red); color: var(--incorrect-red); }
+    .action-btn.danger:hover { background: var(--incorrect-red); color: white; }
+
+    .form-box { width: 100%; display: flex; flex-direction: column; gap: 12px; background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); }
+    input, textarea, select { background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); padding: 10px; border-radius: 6px; font-size: 0.95rem; }
+    textarea { resize: vertical; min-height: 60px; }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent-blue); }
+
+    /* Results Screen */
+    .results-card { width: 100%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; padding: 24px; text-align: center; display: flex; flex-direction: column; gap: 16px; }
+    .score-circle { font-size: 2.8rem; font-weight: 800; color: var(--gold-accent); text-shadow: 0 0 15px var(--gold-glow); }
+    .review-list { display: flex; flex-direction: column; gap: 10px; width: 100%; text-align: left; }
+    .review-item { background: var(--bg-color); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; display: flex; flex-direction: column; gap: 6px; }
+    .review-item.is-correct { border-left: 4px solid var(--correct-green); }
+    .review-item.is-incorrect { border-left: 4px solid var(--incorrect-red); }
+    .text-correct { color: var(--correct-green); }
+    .text-incorrect { color: var(--incorrect-red); }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <div class="brand">CRISTIANO'S <span>QUIZ</span></div>
+      <button class="nav-btn hidden" id="home-btn" onclick="showDashboard()">Dashboard</button>
+    </div>
+
+    <!-- 1. Dashboard View -->
+    <div id="dashboard-view" class="view">
+      
+      <!-- Quiz For Today Section -->
+      <div class="dashboard-card today-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+          <div>
+            <h3 style="color: var(--gold-accent);">Quiz for Today</h3>
+            <p style="color: var(--text-sub); font-size: 0.85rem; margin-top: 4px;">100 daily random questions from all quizzes without repeats (1 attempt per day).</p>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <button class="action-btn warning" id="today-quiz-btn" onclick="startDailyQuiz()">Start Today's Quiz</button>
+            <div id="today-record" style="font-size: 0.85rem; color: var(--text-sub); text-align: right; white-space: nowrap;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dashboard-card">
+        <h3>Create New Quiz Space</h3>
+        <div style="display: flex; gap: 10px;">
+          <input type="text" id="new-quiz-title" placeholder="Quiz Title (e.g., Computer Science)" style="flex: 1;" />
+          <button class="action-btn" onclick="createNewQuiz()">Create Quiz</button>
+        </div>
+      </div>
+
+      <div class="dashboard-card">
+        <h3>Saved Quizzes</h3>
+        <div class="quiz-grid" id="quiz-space-list"></div>
+      </div>
+    </div>
+
+    <!-- 2. Quiz View -->
+    <div id="quiz-view" class="view hidden">
+      <div class="quiz-card">
+        <div class="progress">
+          <span id="question-count">Question 1 of 0</span>
+          <span id="score-counter">Score: 0</span>
+        </div>
+        <div class="question-text" id="question-text">Loading...</div>
+        <div class="options-grid" id="options-container"></div>
+        
+        <!-- Explanation Note Display -->
+        <div class="explanation-box hidden" id="explanation-box">
+          <div class="explanation-title">Reason / Explanation</div>
+          <div id="explanation-text"></div>
+        </div>
+
+        <button class="action-btn hidden" id="next-btn" onclick="nextQuestion()">Next Question</button>
+      </div>
+    </div>
+
+    <!-- 3. Results View -->
+    <div id="results-view" class="view hidden">
+      <div class="results-card">
+        <h2>Quiz Complete!</h2>
+        <div class="score-circle" id="final-score-display">0 / 0</div>
+        <p style="color: var(--text-sub);">Response Breakdown:</p>
+        <div class="review-list" id="review-list"></div>
+        
+        <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
+          <button class="action-btn warning hidden" id="view-mistakes-btn" onclick="showMistakesView()">Practice Wrong Answers</button>
+          <div style="display: flex; gap: 10px;">
+            <button class="action-btn" id="retake-btn" style="flex:1;" onclick="retakeCurrentQuiz()">Retake Quiz</button>
+            <button class="action-btn secondary" style="flex:1;" onclick="showDashboard()">Back to Dashboard</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Mistakes View -->
+    <div id="mistakes-view" class="view hidden">
+      <div class="results-card">
+        <h2>Wrong Answers Review</h2>
+        <p style="color: var(--text-sub);">Questions you answered incorrectly in this session:</p>
+        <div class="review-list" id="mistakes-list"></div>
+        
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+          <button class="action-btn warning" style="flex:1;" onclick="retryMistakesOnly()">Retake Only Wrong Answers</button>
+          <button class="action-btn secondary" style="flex:1;" onclick="showDashboard()">Back to Dashboard</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Manage Questions View -->
+    <div id="manage-view" class="view hidden">
+      <form class="form-box" id="add-card-form">
+        <h3 id="form-title">Add New Question</h3>
+        <input type="hidden" id="editing-q-id" value="" />
+        <input type="text" id="q-input" placeholder="Question prompt" required />
+        <input type="text" id="correct-input" placeholder="Correct Answer" required />
+        <input type="text" id="dist1-input" placeholder="Wrong Option 1" required />
+        <input type="text" id="dist2-input" placeholder="Wrong Option 2" required />
+        <input type="text" id="dist3-input" placeholder="Wrong Option 3" required />
+        <textarea id="explanation-input" placeholder="Reason/Explanation for the correct answer (optional)"></textarea>
+        
+        <div style="display: flex; gap: 10px;">
+          <button type="submit" class="action-btn" id="submit-btn" style="flex: 1;">Add Question</button>
+          <button type="button" class="action-btn secondary hidden" id="cancel-edit-btn" onclick="cancelEdit()">Cancel Edit</button>
+        </div>
+      </form>
+
+      <div class="dashboard-card">
+        <h3 id="manage-quiz-name">Questions in Quiz Space</h3>
+        <div class="quiz-grid" id="manage-question-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'cristianos_quizzes_data';
+    const DAILY_TRACK_KEY = 'cristianos_daily_tracker';
+
+    let quizSpaces = loadQuizzesFromStorage();
+    let dailyTracker = loadDailyTracker();
+
+    let activeQuizId = null;
+    let isDailyQuiz = false;
+    let currentQuizQueue = [];
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let userAnswers = [];
+
+    function loadQuizzesFromStorage() {
+      const data = localStorage.getItem(STORAGE_KEY);
+      if (data) return JSON.parse(data);
+      
+      return [
+        {
+          id: 'quiz_cristiano_1',
+          title: 'General Knowledge',
+          questions: [
+            {
+              id: 101,
+              question: "What is the capital of France?",
+              correct: "Paris",
+              distractors: ["London", "Berlin", "Madrid"],
+              explanation: "Paris has been the capital city of France since the 10th century."
+            },
+            {
+              id: 102,
+              question: "Which planet is known as the Red Planet?",
+              correct: "Mars",
+              distractors: ["Venus", "Jupiter", "Saturn"],
+              explanation: "Mars appears red due to the prevalence of iron oxide (rust) on its surface."
+            }
+          ]
+        }
+      ];
+    }
+
+    function saveQuizzesToStorage() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(quizSpaces));
+    }
+
+    function loadDailyTracker() {
+      const data = localStorage.getItem(DAILY_TRACK_KEY);
+      return data ? JSON.parse(data) : { usedIds: [], lastDate: '', lastScore: null, totalQuestions: 0 };
+    }
+
+    function saveDailyTracker() {
+      localStorage.setItem(DAILY_TRACK_KEY, JSON.stringify(dailyTracker));
+    }
+
+    function shuffleArray(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    const dashboardView = document.getElementById('dashboard-view');
+    const quizView = document.getElementById('quiz-view');
+    const resultsView = document.getElementById('results-view');
+    const mistakesView = document.getElementById('mistakes-view');
+    const manageView = document.getElementById('manage-view');
+    const homeBtn = document.getElementById('home-btn');
+
+    function hideAllViews() {
+      dashboardView.classList.add('hidden');
+      quizView.classList.add('hidden');
+      resultsView.classList.add('hidden');
+      mistakesView.classList.add('hidden');
+      manageView.classList.add('hidden');
+      homeBtn.classList.remove('hidden');
+    }
+
+    function showDashboard() {
+      hideAllViews();
+      homeBtn.classList.add('hidden');
+      dashboardView.classList.remove('hidden');
+      renderDashboard();
+    }
+
+    function renderDashboard() {
+      const listContainer = document.getElementById('quiz-space-list');
+      listContainer.innerHTML = '';
+
+      // Update Today's Quiz Button & Status
+      const today = new Date().toISOString().split('T')[0];
+      const todayBtn = document.getElementById('today-quiz-btn');
+      const todayRecord = document.getElementById('today-record');
+
+      if (dailyTracker.lastDate === today && dailyTracker.lastScore !== null) {
+        todayBtn.disabled = true;
+        todayBtn.textContent = 'Completed Today';
+        todayRecord.innerHTML = `<strong>Score: ${dailyTracker.lastScore} / ${dailyTracker.totalQuestions}</strong><br><span style="font-size:0.75rem;">Date: ${dailyTracker.lastDate}</span>`;
+      } else {
+        todayBtn.disabled = false;
+        todayBtn.textContent = "Start Today's Quiz";
+        if (dailyTracker.lastDate && dailyTracker.lastScore !== null) {
+          todayRecord.innerHTML = `<span style="font-size:0.8rem;">Last: ${dailyTracker.lastScore}/${dailyTracker.totalQuestions}</span><br><span style="font-size:0.75rem;">Date: ${dailyTracker.lastDate}</span>`;
+        } else {
+          todayRecord.innerHTML = '';
+        }
+      }
+
+      if (quizSpaces.length === 0) {
+        listContainer.innerHTML = '<div style="color: var(--text-sub); text-align: center;">No quiz spaces found. Create one above!</div>';
+        return;
+      }
+
+      quizSpaces.forEach(space => {
+        const item = document.createElement('div');
+        item.className = 'quiz-item';
+        item.innerHTML = `
+          <div class="quiz-info">
+            <span class="quiz-title">${space.title}</span>
+            <span class="quiz-count">${space.questions.length} Question(s)</span>
+          </div>
+          <div class="btn-group">
+            <button class="action-btn" onclick="startQuiz('${space.id}')">Start</button>
+            <button class="action-btn secondary" onclick="openManageQuiz('${space.id}')">Edit</button>
+            <button class="action-btn danger" onclick="deleteQuizSpace('${space.id}')">Delete</button>
+          </div>
+        `;
+        listContainer.appendChild(item);
+      });
+    }
+
+    function startDailyQuiz() {
+      const today = new Date().toISOString().split('T')[0];
+
+      if (dailyTracker.lastDate === today && dailyTracker.lastScore !== null) {
+        alert("You have already completed Today's Quiz. Please try again tomorrow!");
+        return;
+      }
+
+      let allQuestions = [];
+      quizSpaces.forEach(space => {
+        space.questions.forEach(q => {
+          allQuestions.push({ ...q, spaceTitle: space.title });
+        });
+      });
+
+      if (allQuestions.length === 0) {
+        alert("Please add questions to your quizzes first!");
+        return;
+      }
+
+      // Check if all questions have been exhausted
+      if (dailyTracker.usedIds.length >= allQuestions.length) {
+        dailyTracker.usedIds = []; // Reset cycle
+      }
+
+      // Pick questions not used yet
+      let unusedQuestions = allQuestions.filter(q => !dailyTracker.usedIds.includes(q.id));
+      
+      if (unusedQuestions.length === 0) {
+        dailyTracker.usedIds = [];
+        unusedQuestions = [...allQuestions];
+      }
+
+      const selectedQuestions = shuffleArray(unusedQuestions).slice(0, 100);
+
+      // Record selected questions into tracker
+      selectedQuestions.forEach(q => dailyTracker.usedIds.push(q.id));
+
+      isDailyQuiz = true;
+      startQuiz(null, selectedQuestions);
+    }
+
+    function createNewQuiz() {
+      const titleInput = document.getElementById('new-quiz-title');
+      const title = titleInput.value.trim();
+      if (!title) return;
+
+      const newQuiz = {
+        id: 'quiz_' + Date.now(),
+        title: title,
+        questions: []
+      };
+
+      quizSpaces.push(newQuiz);
+      saveQuizzesToStorage();
+      titleInput.value = '';
+      renderDashboard();
+    }
+
+    function deleteQuizSpace(id) {
+      if (confirm("Delete this quiz space completely?")) {
+        quizSpaces = quizSpaces.filter(q => q.id !== id);
+        saveQuizzesToStorage();
+        renderDashboard();
+      }
+    }
+
+    function startQuiz(quizId, customQuestions = null) {
+      activeQuizId = quizId;
+      if (!customQuestions) isDailyQuiz = false;
+
+      const space = quizSpaces.find(q => q.id === quizId);
+      const targetQuestions = customQuestions || (space ? space.questions : []);
+
+      if (!targetQuestions || targetQuestions.length === 0) {
+        alert("No questions available for this quiz!");
+        return;
+      }
+
+      hideAllViews();
+      quizView.classList.remove('hidden');
+
+      currentQuizQueue = shuffleArray(targetQuestions).map(q => ({
+        ...q,
+        choices: shuffleArray([q.correct, ...q.distractors])
+      }));
+
+      currentQuestionIndex = 0;
+      score = 0;
+      userAnswers = [];
+
+      showQuestion();
+    }
+
+    function retakeCurrentQuiz() {
+      if (isDailyQuiz) {
+        alert("Retaking Today's Quiz is disabled (1 attempt allowed per day).");
+        return;
+      }
+      startQuiz(activeQuizId);
+    }
+
+    function showQuestion() {
+      document.getElementById('next-btn').classList.add('hidden');
+      document.getElementById('explanation-box').classList.add('hidden');
+      
+      const currentQ = currentQuizQueue[currentQuestionIndex];
+
+      document.getElementById('question-count').textContent = `Question ${currentQuestionIndex + 1} of ${currentQuizQueue.length}`;
+      document.getElementById('score-counter').textContent = `Score: ${score}`;
+      document.getElementById('question-text').textContent = currentQ.question;
+
+      const optionsContainer = document.getElementById('options-container');
+      optionsContainer.innerHTML = '';
+
+      currentQ.choices.forEach(choice => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.textContent = choice;
+        btn.onclick = () => selectAnswer(choice, btn);
+        optionsContainer.appendChild(btn);
+      });
+    }
+
+    function selectAnswer(selectedChoice, selectedBtn) {
+      const currentQ = currentQuizQueue[currentQuestionIndex];
+      const isCorrect = selectedChoice === currentQ.correct;
+
+      if (isCorrect) score++;
+
+      userAnswers.push({
+        rawQuestion: currentQ,
+        question: currentQ.question,
+        selected: selectedChoice,
+        correct: currentQ.correct,
+        isCorrect: isCorrect,
+        explanation: currentQ.explanation
+      });
+
+      const buttons = document.querySelectorAll('.option-btn');
+      buttons.forEach(btn => {
+        btn.disabled = true;
+        if (btn.textContent === currentQ.correct) {
+          btn.classList.add('correct');
+        } else if (btn.textContent === selectedChoice && !isCorrect) {
+          btn.classList.add('incorrect');
+        }
+      });
+
+      if (currentQ.explanation && currentQ.explanation.trim() !== '') {
+        const expBox = document.getElementById('explanation-box');
+        document.getElementById('explanation-text').textContent = currentQ.explanation;
+        expBox.classList.remove('hidden');
+      }
+
+      document.getElementById('next-btn').classList.remove('hidden');
+    }
+
+    function nextQuestion() {
+      currentQuestionIndex++;
+      if (currentQuestionIndex < currentQuizQueue.length) {
+        showQuestion();
+      } else {
+        showResults();
+      }
+    }
+
+    function showResults() {
+      hideAllViews();
+      resultsView.classList.remove('hidden');
+
+      if (isDailyQuiz) {
+        const today = new Date().toISOString().split('T')[0];
+        dailyTracker.lastDate = today;
+        dailyTracker.lastScore = score;
+        dailyTracker.totalQuestions = currentQuizQueue.length;
+        saveDailyTracker();
+        document.getElementById('retake-btn').classList.add('hidden');
+      } else {
+        document.getElementById('retake-btn').classList.remove('hidden');
+      }
+
+      document.getElementById('final-score-display').textContent = `${score} / ${currentQuizQueue.length}`;
+      const reviewList = document.getElementById('review-list');
+      reviewList.innerHTML = '';
+
+      const wrongAnswers = userAnswers.filter(ans => !ans.isCorrect);
+      const mistakesBtn = document.getElementById('view-mistakes-btn');
+      
+      if (wrongAnswers.length > 0) {
+        mistakesBtn.classList.remove('hidden');
+      } else {
+        mistakesBtn.classList.add('hidden');
+      }
+
+      userAnswers.forEach((ans, index) => {
+        const item = document.createElement('div');
+        item.className = `review-item ${ans.isCorrect ? 'is-correct' : 'is-incorrect'}`;
+        item.innerHTML = `
+          <div style="font-weight:600;">${index + 1}. ${ans.question}</div>
+          <div style="font-size:0.88rem;">Your Choice: <span class="${ans.isCorrect ? 'text-correct' : 'text-incorrect'}">${ans.selected}</span></div>
+          ${!ans.isCorrect ? `<div style="font-size:0.88rem;">Correct Option: <span class="text-correct">${ans.correct}</span></div>` : ''}
+          ${ans.explanation ? `<div style="font-size:0.85rem; color: var(--text-sub); margin-top: 4px;"><strong>Reason:</strong> ${ans.explanation}</div>` : ''}
+        `;
+        reviewList.appendChild(item);
+      });
+    }
+
+    function showMistakesView() {
+      hideAllViews();
+      mistakesView.classList.remove('hidden');
+
+      const mistakesList = document.getElementById('mistakes-list');
+      mistakesList.innerHTML = '';
+
+      const wrongAnswers = userAnswers.filter(ans => !ans.isCorrect);
+
+      wrongAnswers.forEach((ans, index) => {
+        const item = document.createElement('div');
+        item.className = 'review-item is-incorrect';
+        item.innerHTML = `
+          <div style="font-weight:600;">${index + 1}. ${ans.question}</div>
+          <div style="font-size:0.88rem;">You Answered: <span class="text-incorrect">${ans.selected}</span></div>
+          <div style="font-size:0.88rem;">Correct Answer: <span class="text-correct">${ans.correct}</span></div>
+          ${ans.explanation ? `<div style="font-size:0.85rem; color: var(--text-sub); margin-top: 4px;"><strong>Reason:</strong> ${ans.explanation}</div>` : ''}
+        `;
+        mistakesList.appendChild(item);
+      });
+    }
+
+    function retryMistakesOnly() {
+      const wrongQuestions = userAnswers
+        .filter(ans => !ans.isCorrect)
+        .map(ans => ans.rawQuestion);
+
+      if (wrongQuestions.length === 0) return;
+      startQuiz(activeQuizId, wrongQuestions);
+    }
+
+    function openManageQuiz(quizId) {
+      activeQuizId = quizId;
+      const space = quizSpaces.find(q => q.id === quizId);
+
+      hideAllViews();
+      manageView.classList.remove('hidden');
+      document.getElementById('manage-quiz-name').textContent = `Questions in: ${space.title}`;
+
+      cancelEdit();
+      renderManageQuestionList();
+    }
+
+    function editQuestion(qId) {
+      const space = quizSpaces.find(q => q.id === activeQuizId);
+      if (!space) return;
+
+      const qObj = space.questions.find(item => item.id === qId);
+      if (!qObj) return;
+
+      document.getElementById('editing-q-id').value = qObj.id;
+      document.getElementById('q-input').value = qObj.question;
+      document.getElementById('correct-input').value = qObj.correct;
+      document.getElementById('dist1-input').value = qObj.distractors[0] || '';
+      document.getElementById('dist2-input').value = qObj.distractors[1] || '';
+      document.getElementById('dist3-input').value = qObj.distractors[2] || '';
+      document.getElementById('explanation-input').value = qObj.explanation || '';
+
+      document.getElementById('form-title').textContent = 'Edit Question';
+      document.getElementById('submit-btn').textContent = 'Save Changes';
+      document.getElementById('cancel-edit-btn').classList.remove('hidden');
+      
+      document.getElementById('add-card-form').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function duplicateQuestionToQuiz(qId) {
+      const currentSpace = quizSpaces.find(q => q.id === activeQuizId);
+      if (!currentSpace) return;
+
+      const qObj = currentSpace.questions.find(item => item.id === qId);
+      if (!qObj) return;
+
+      const otherQuizzes = quizSpaces.filter(q => q.id !== activeQuizId);
+      if (otherQuizzes.length === 0) {
+        alert("No other quiz spaces available. Create a new quiz space first!");
+        return;
+      }
+
+      let optionsText = "Select a target quiz to copy this question to:\n\n";
+      otherQuizzes.forEach((q, index) => {
+        optionsText += `${index + 1}. ${q.title}\n`;
+      });
+
+      const choice = prompt(optionsText + "\nEnter number:");
+      const choiceIndex = parseInt(choice) - 1;
+
+      if (!isNaN(choiceIndex) && choiceIndex >= 0 && choiceIndex < otherQuizzes.length) {
+        const targetQuiz = otherQuizzes[choiceIndex];
+
+        const clonedQuestion = {
+          ...JSON.parse(JSON.stringify(qObj)),
+          id: Date.now()
+        };
+
+        targetQuiz.questions.push(clonedQuestion);
+        saveQuizzesToStorage();
+        alert(`Question copied successfully to "${targetQuiz.title}"!`);
+      }
+    }
+
+    function cancelEdit() {
+      document.getElementById('editing-q-id').value = '';
+      document.getElementById('add-card-form').reset();
+      document.getElementById('form-title').textContent = 'Add New Question';
+      document.getElementById('submit-btn').textContent = 'Add Question';
+      document.getElementById('cancel-edit-btn').classList.add('hidden');
+    }
+
+    document.getElementById('add-card-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const space = quizSpaces.find(q => q.id === activeQuizId);
+      const editingId = document.getElementById('editing-q-id').value;
+
+      const q = document.getElementById('q-input').value.trim();
+      const correct = document.getElementById('correct-input').value.trim();
+      const dist1 = document.getElementById('dist1-input').value.trim();
+      const dist2 = document.getElementById('dist2-input').value.trim();
+      const dist3 = document.getElementById('dist3-input').value.trim();
+      const explanation = document.getElementById('explanation-input').value.trim();
+
+      if (space && q && correct && dist1 && dist2 && dist3) {
+        if (editingId) {
+          const qObj = space.questions.find(item => item.id == editingId);
+          if (qObj) {
+            qObj.question = q;
+            qObj.correct = correct;
+            qObj.distractors = [dist1, dist2, dist3];
+            qObj.explanation = explanation;
+          }
+        } else {
+          space.questions.push({
+            id: Date.now(),
+            question: q,
+            correct: correct,
+            distractors: [dist1, dist2, dist3],
+            explanation: explanation
+          });
+        }
+
+        saveQuizzesToStorage();
+        cancelEdit();
+        renderManageQuestionList();
+      }
+    });
+
+    function deleteQuestion(qId) {
+      const space = quizSpaces.find(q => q.id === activeQuizId);
+      if (space && confirm("Delete this question?")) {
+        space.questions = space.questions.filter(q => q.id !== qId);
+        saveQuizzesToStorage();
+        if (document.getElementById('editing-q-id').value == qId) {
+          cancelEdit();
+        }
+        renderManageQuestionList();
+      }
+    }
+
+    function renderManageQuestionList() {
+      const space = quizSpaces.find(q => q.id === activeQuizId);
+      const container = document.getElementById('manage-question-list');
+      container.innerHTML = '';
+
+      if (!space || space.questions.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-sub); text-align: center;">No questions added to this space yet.</div>';
+        return;
+      }
+
+      space.questions.forEach((item, idx) => {
+        const div = document.createElement('div');
+        div.className = 'quiz-item';
+        div.innerHTML = `
+          <div style="flex: 1; padding-right: 10px;">
+            <strong>${idx + 1}. ${item.question}</strong><br>
+            <small style="color: var(--correct-green);">✔ ${item.correct}</small>
+            ${item.explanation ? `<br><small style="color: var(--text-sub);">Reason: ${item.explanation}</small>` : ''}
+          </div>
+          <div class="btn-group">
+            <button class="action-btn warning" onclick="duplicateQuestionToQuiz(${item.id})">Copy To...</button>
+            <button class="action-btn secondary" onclick="editQuestion(${item.id})">Edit</button>
+            <button class="action-btn danger" onclick="deleteQuestion(${item.id})">&times;</button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    showDashboard();
+  </script>
+</body>
+</html>
